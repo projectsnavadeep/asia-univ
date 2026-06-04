@@ -57,7 +57,7 @@ export default function ComparisonDock({
     <>
       {/* 1. Global Sticky Floating Dock (Bottom-6 on desktop, bottom-20 on mobile) */}
       <div className="fixed bottom-20 md:bottom-6 left-1/2 z-40 w-full max-w-2xl -translate-x-1/2 px-4 font-sans select-none">
-        <div className="border border-slate-950 bg-white p-3 sm:p-4 shadow-xl flex items-center justify-between">
+        <div className="aur-panel border-slate-900/10 dark:border-cyber-yellow/20 p-3 sm:p-4 flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-4 truncate">
             {/* Action Icon */}
             <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center border border-slate-905 bg-slate-50 text-slate-800">

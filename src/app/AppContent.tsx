@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "./components/navbar/Navbar";
+import { useToast } from "./components/feedback/ToastContext";
 import Sidebar from "./components/sidebar/Sidebar";
 import MobileMenu from "./components/mobile/MobileMenu";
 import Homepage from "./components/Homepage";
@@ -16,6 +18,7 @@ import { BarChart3, Bookmark, Settings, Award, GraduationCap, CheckCircle, Shiel
 export default function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
 
   const { activeView, handleViewChange, selectedUniId, setSelectedUniId, theme } = useSidebar();
 
@@ -31,6 +34,11 @@ export default function AppContent() {
   const view = activeView;
   const id = selectedUniId;
 
+  const viewKey = useMemo(() => {
+    if (view === "profile" && id) return `profile-${id}`;
+    return view;
+  }, [view, id]);
+
   // Sync initial search query if present in URL
   useEffect(() => {
     const q = searchParams.get("search");
@@ -41,7 +49,7 @@ export default function AppContent() {
     setSelectedUniIds((prev) => {
       if (prev.includes(uniId)) return prev.filter((id) => id !== uniId);
       if (prev.length >= 4) {
-        alert("You can compare a maximum of 4 universities at a time.");
+        showToast("You can compare a maximum of 4 universities at a time.", "warning");
         return prev;
       }
       return [...prev, uniId];
@@ -65,15 +73,15 @@ export default function AppContent() {
   };
 
   const handleArticleSelect = (article: Article) => {
-    alert(`Opening article: ${article.title}`);
+    showToast(`Opening article: ${article.title}`, "info");
   };
 
   // Get selected universities for Saved view
   const savedUniversities = MOCK_UNIVERSITIES.filter((u) => selectedUniIds.includes(u.id));
 
   return (
-    <div className={`flex min-h-screen flex-col transition-colors duration-300 ${
-      theme === "dark" ? "bg-cyber-black text-slate-100 dark" : "bg-white text-slate-900"
+    <div className={`aur-page flex min-h-screen flex-col transition-colors duration-300 ${
+      theme === "dark" ? "text-slate-100 dark" : "text-slate-900"
     }`}>
       {/* Top Navigation Bar */}
       <Navbar />
@@ -85,8 +93,16 @@ export default function AppContent() {
         <Sidebar />
 
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col min-w-0 p-4 pb-20 md:pb-6">
-          
+        <main className="flex-1 flex flex-col min-w-0 p-4 pb-20 md:pb-6 max-w-[1600px] w-full mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={viewKey}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="flex flex-col flex-grow"
+            >
           {view === "home" && (
             <Homepage
               onSearchSubmit={(q) => setSearchQuery(q)}
@@ -331,6 +347,8 @@ export default function AppContent() {
             </div>
           )}
 
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

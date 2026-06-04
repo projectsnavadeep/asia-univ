@@ -52,7 +52,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // State initialization
   const [isCollapsed, setIsCollapsedState] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark"); // Default to dark futuristic theme
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [filters, setFilters] = useState<FilterState>(initialFilters);
 
   // Read localStorage for isCollapsed and theme (safe for SSR)
@@ -67,8 +67,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (savedTheme === "dark" || savedTheme === "light") {
         setTheme(savedTheme);
       } else {
-        // Default to dark futuristic
-        setTheme("dark");
+        setTheme("light");
       }
     }
   }, []);

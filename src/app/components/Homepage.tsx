@@ -1,8 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Search, BookOpen, GraduationCap, ChevronRight, MapPin, Star, Sparkles } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { Search, BookOpen, GraduationCap, ChevronRight, MapPin, Star } from "lucide-react";
 import { MOCK_UNIVERSITIES, FEATURED_ARTICLES, University, Article } from "../data";
+
+type SuggestionPick =
+  | { kind: "uni"; uni: University }
+  | { kind: "article"; article: Article }
+  | { kind: "view-all" };
+
+function highlightMatch(text: string, query: string) {
+  const q = query.trim();
+  if (!q) return text;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-amber-100 text-amber-900 dark:bg-cyber-yellow/20 dark:text-cyber-yellow px-0.5">
+        {text.slice(idx, idx + q.length)}
+      </mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
 
 interface HomepageProps {
   onSearchSubmit: (query: string) => void;
@@ -23,9 +45,11 @@ export default function Homepage({
     articles: Article[];
   }>({ universities: [], articles: [] });
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState<"overall" | "research" | "employability">("overall");
-  
+
   const suggestionRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search auto-suggestions
   useEffect(() => {
@@ -50,6 +74,55 @@ export default function Homepage({
 
     setSuggestions({ universities: filteredUnis, articles: filteredArticles });
   }, [searchQuery]);
+
+  const flatSuggestions = useMemo((): SuggestionPick[] => {
+    const items: SuggestionPick[] = [];
+    suggestions.universities.forEach((uni) => items.push({ kind: "uni", uni }));
+    suggestions.articles.forEach((article) => items.push({ kind: "article", article }));
+    if (searchQuery.trim().length > 0) items.push({ kind: "view-all" });
+    return items;
+  }, [suggestions, searchQuery]);
+
+  useEffect(() => {
+    setActiveSuggestionIndex(-1);
+  }, [searchQuery]);
+
+  const activateSuggestion = useCallback(
+    (item: SuggestionPick) => {
+      if (item.kind === "uni") {
+        onUniversitySelect(item.uni.id);
+        setShowSuggestions(false);
+      } else if (item.kind === "article") {
+        onArticleSelect(item.article);
+        setShowSuggestions(false);
+      } else {
+        onSearchSubmit(searchQuery);
+        onViewChange("rankings");
+        setShowSuggestions(false);
+      }
+    },
+    [onArticleSelect, onSearchSubmit, onUniversitySelect, onViewChange, searchQuery]
+  );
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setActiveSuggestionIndex(-1);
+      return;
+    }
+    if (!showSuggestions || flatSuggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveSuggestionIndex((i) => Math.min(i + 1, flatSuggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveSuggestionIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && activeSuggestionIndex >= 0) {
+      e.preventDefault();
+      activateSuggestion(flatSuggestions[activeSuggestionIndex]);
+    }
+  };
 
   // Click outside listener to close suggestions
   useEffect(() => {
@@ -85,19 +158,17 @@ export default function Homepage({
     <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8 py-8 font-sans flex-grow">
       
       {/* Split Layout Screen */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-8 mb-16 border-b border-slate-200 pb-16">
+      <div className="grid grid-cols-1 md:grid-cols-10 gap-8 mb-16 border-b border-slate-200 dark:border-cyber-border/30 pb-16">
         
         {/* Left Pane (40% - Cols 1-4): Discovery & Typographic Search */}
-        <div className="lg:col-span-4 flex flex-col justify-center pr-0 lg:pr-6">
+        <div className="md:col-span-4 flex flex-col justify-center pr-0 md:pr-8 aur-hero-accent">
           <div className="mb-4">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-700">
-              Academic Intelligence Hub
-            </span>
+            <span className="aur-caption">Academic Intelligence Hub</span>
           </div>
-          <h2 className="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900 leading-tight mb-4">
+          <h2 className="aur-section-title text-3xl sm:text-4xl md:text-[2.75rem] leading-[1.15] mb-5">
             Find World-Class Education in Asia.
           </h2>
-          <p className="text-slate-500 text-sm leading-relaxed mb-8">
+          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-[15px] leading-relaxed mb-8 max-w-md">
             Filter institutional indicators, compare global rankings, and explore regional study models including medical careers in Central Asia.
           </p>
 
@@ -106,7 +177,11 @@ export default function Homepage({
             <form onSubmit={handleSearchSubmit} className="flex">
               <div className="relative flex-grow">
                 <input
-                  type="text"
+                  ref={searchInputRef}
+                  type="search"
+                  role="combobox"
+                  aria-expanded={showSuggestions && searchQuery.trim().length > 0}
+                  aria-autocomplete="list"
                   placeholder="Search universities, locations, subjects..."
                   value={searchQuery}
                   onChange={(e) => {
@@ -114,95 +189,126 @@ export default function Homepage({
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  className="w-full border border-slate-900 bg-white px-4 py-3 pl-11 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-700 focus:border-amber-700"
+                  onKeyDown={handleSearchKeyDown}
+                  className="w-full border border-slate-900 dark:border-cyber-border bg-white dark:bg-cyber-gray px-4 py-3 pl-11 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-700 focus:border-amber-700 dark:focus:ring-cyber-yellow dark:focus:border-cyber-yellow aur-focus-ring"
                 />
                 <Search className="absolute left-4 top-3.5 h-4.5 w-4.5 text-slate-400" />
               </div>
               <button
                 type="submit"
-                className="bg-slate-900 text-white text-xs font-semibold uppercase tracking-wider px-6 hover:bg-slate-800 transition-colors border-y border-r border-slate-900"
+                className="aur-btn-primary px-6 py-3 border-y border-r border-slate-900 dark:border-cyber-yellow"
               >
                 Search
               </button>
             </form>
 
             {/* Debounced Suggestion Dropdown */}
-            {showSuggestions && (searchQuery.trim().length > 0) && (
-              <div className="absolute left-0 right-0 z-20 mt-1.5 border border-slate-950 bg-white shadow-xl max-h-96 overflow-y-auto">
-                
-                {/* Universities Section */}
-                <div className="p-3 border-b border-slate-100">
-                  <div className="flex items-center space-x-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Universities</span>
-                  </div>
-                  {suggestions.universities.length > 0 ? (
-                    <ul className="space-y-1">
-                      {suggestions.universities.map((uni) => (
-                        <li key={uni.id}>
-                          <button
-                            onClick={() => {
-                              onUniversitySelect(uni.id);
-                              setShowSuggestions(false);
-                            }}
-                            className="w-full text-left flex items-center justify-between p-2 hover:bg-slate-50 transition-colors text-xs"
-                          >
-                            <span className="font-semibold text-slate-800 truncate pr-4">{uni.name}</span>
-                            <span className="flex items-center text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono shrink-0">
-                              <MapPin className="h-2.5 w-2.5 mr-0.5" />
-                              {uni.location}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="text-xs text-slate-400 p-2 italic">No universities found</div>
-                  )}
-                </div>
+            {showSuggestions && searchQuery.trim().length > 0 && (
+              <div
+                role="listbox"
+                className="absolute left-0 right-0 z-20 mt-1.5 border border-slate-950 dark:border-cyber-border/50 bg-white dark:bg-cyber-dark shadow-xl dark:shadow-2xl max-h-96 overflow-y-auto cyber-glass-light dark:cyber-glass"
+              >
+                {(() => {
+                  let rowIndex = -1;
+                  return (
+                    <>
+                      <div className="p-3 border-b border-slate-100 dark:border-cyber-border/30">
+                        <div className="aur-caption flex items-center gap-1.5 mb-2 text-slate-400 dark:text-slate-500">
+                          <GraduationCap className="h-3.5 w-3.5" />
+                          <span>Universities</span>
+                        </div>
+                        {suggestions.universities.length > 0 ? (
+                          <ul className="space-y-1">
+                            {suggestions.universities.map((uni) => {
+                              rowIndex += 1;
+                              const isActive = activeSuggestionIndex === rowIndex;
+                              return (
+                                <li key={uni.id} role="option" aria-selected={isActive}>
+                                  <button
+                                    type="button"
+                                    onMouseEnter={() => setActiveSuggestionIndex(rowIndex)}
+                                    onClick={() => activateSuggestion({ kind: "uni", uni })}
+                                    className={`w-full text-left flex items-center justify-between p-2 transition-colors text-xs aur-focus-ring ${
+                                      isActive
+                                        ? "bg-amber-50 dark:bg-cyber-yellow/10 border-l-2 border-amber-700 dark:border-cyber-yellow"
+                                        : "hover:bg-slate-50 dark:hover:bg-cyber-gray/40 border-l-2 border-transparent"
+                                    }`}
+                                  >
+                                    <span className="font-semibold text-slate-800 dark:text-slate-100 truncate pr-4">
+                                      {highlightMatch(uni.name, searchQuery)}
+                                    </span>
+                                    <span className="flex items-center text-[10px] text-slate-400 bg-slate-100 dark:bg-cyber-gray px-1.5 py-0.5 font-mono shrink-0">
+                                      <MapPin className="h-2.5 w-2.5 mr-0.5" />
+                                      {uni.location}
+                                    </span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <div className="text-xs text-slate-400 p-2 italic">No universities found</div>
+                        )}
+                      </div>
 
-                {/* Spotlight Reports & Country Nodes */}
-                <div className="p-3">
-                  <div className="flex items-center space-x-1.5 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Spotlights & Articles</span>
-                  </div>
-                  {suggestions.articles.length > 0 ? (
-                    <ul className="space-y-1">
-                      {suggestions.articles.map((art) => (
-                        <li key={art.id}>
-                          <button
-                            onClick={() => {
-                              onArticleSelect(art);
-                              setShowSuggestions(false);
-                            }}
-                            className="w-full text-left p-2 hover:bg-slate-50 transition-colors text-xs block"
-                          >
-                            <span className="font-semibold text-slate-800 line-clamp-1">{art.title}</span>
-                            <span className="text-[10px] text-slate-400 block mt-0.5">{art.source}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="text-xs text-slate-400 p-2 italic">No relevant articles found</div>
-                  )}
-                </div>
+                      <div className="p-3 border-b border-slate-100 dark:border-cyber-border/30">
+                        <div className="aur-caption flex items-center gap-1.5 mb-2 text-slate-400 dark:text-slate-500">
+                          <BookOpen className="h-3.5 w-3.5" />
+                          <span>Spotlights & Articles</span>
+                        </div>
+                        {suggestions.articles.length > 0 ? (
+                          <ul className="space-y-1">
+                            {suggestions.articles.map((art) => {
+                              rowIndex += 1;
+                              const isActive = activeSuggestionIndex === rowIndex;
+                              return (
+                                <li key={art.id} role="option" aria-selected={isActive}>
+                                  <button
+                                    type="button"
+                                    onMouseEnter={() => setActiveSuggestionIndex(rowIndex)}
+                                    onClick={() => activateSuggestion({ kind: "article", article: art })}
+                                    className={`w-full text-left p-2 transition-colors text-xs block aur-focus-ring ${
+                                      isActive
+                                        ? "bg-amber-50 dark:bg-cyber-yellow/10 border-l-2 border-amber-700 dark:border-cyber-yellow"
+                                        : "hover:bg-slate-50 dark:hover:bg-cyber-gray/40 border-l-2 border-transparent"
+                                    }`}
+                                  >
+                                    <span className="font-semibold text-slate-800 dark:text-slate-100 line-clamp-1">
+                                      {highlightMatch(art.title, searchQuery)}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 block mt-0.5">{art.source}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <div className="text-xs text-slate-400 p-2 italic">No relevant articles found</div>
+                        )}
+                      </div>
 
-                {/* View All Search Link */}
-                <div className="bg-slate-50 p-2 text-center border-t border-slate-100">
-                  <button
-                    onClick={() => {
-                      onSearchSubmit(searchQuery);
-                      onViewChange("rankings");
-                      setShowSuggestions(false);
-                    }}
-                    className="inline-flex items-center text-[10px] font-bold text-amber-700 uppercase tracking-widest hover:text-amber-800"
-                  >
-                    View all rankings matching &quot;{searchQuery}&quot;
-                    <ChevronRight className="h-3 w-3 ml-0.5" />
-                  </button>
-                </div>
+                      <div className="bg-slate-50 dark:bg-cyber-gray/50 p-2 text-center border-t border-slate-100 dark:border-cyber-border/30">
+                        {(() => {
+                          rowIndex += 1;
+                          const isActive = activeSuggestionIndex === rowIndex;
+                          return (
+                            <button
+                              type="button"
+                              onMouseEnter={() => setActiveSuggestionIndex(rowIndex)}
+                              onClick={() => activateSuggestion({ kind: "view-all" })}
+                              className={`inline-flex items-center aur-caption hover:text-amber-800 dark:hover:text-cyber-yellow-bright aur-focus-ring px-2 py-1 ${
+                                isActive ? "text-amber-800 dark:text-cyber-yellow" : ""
+                              }`}
+                            >
+                              View all rankings matching &quot;{searchQuery}&quot;
+                              <ChevronRight className="h-3 w-3 ml-0.5" />
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -218,7 +324,7 @@ export default function Homepage({
                   onSearchSubmit(tag);
                   onViewChange("rankings");
                 }}
-                className="text-[11px] border border-slate-200 px-2 py-0.5 text-slate-600 hover:border-slate-900 hover:text-slate-900 bg-slate-50 transition-all font-mono"
+                className="aur-chip font-mono"
               >
                 {tag}
               </button>
@@ -227,18 +333,18 @@ export default function Homepage({
         </div>
 
         {/* Right Pane (60% - Cols 5-10): Global Interactive Rank Card */}
-        <div className="lg:col-span-6 border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
+        <div className="md:col-span-6 aur-card p-6 md:p-8 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
-              <div>
-                <h3 className="font-serif text-xl font-bold text-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-cyber-border/40 pb-5 mb-5">
+              <div className="aur-hero-accent pl-3">
+                <h3 className="aur-section-title text-xl md:text-2xl">
                   Live Top 5 Universities
                 </h3>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                <p className="aur-caption text-slate-400 dark:text-slate-500 mt-1">
                   Real-time Audited Academic Index
                 </p>
               </div>
-              <span className="flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 border border-amber-200 font-mono">
+              <span className="flex items-center text-xs font-semibold text-amber-800 dark:text-cyber-yellow bg-gradient-to-r from-amber-50 to-amber-100/80 dark:from-cyber-yellow/10 dark:to-transparent px-3 py-1.5 border border-amber-200/80 dark:border-cyber-yellow/30 font-mono shadow-sm">
                 <Star className="h-3.5 w-3.5 fill-amber-700 mr-1 shrink-0" />
                 Rankings 2026
               </span>
@@ -279,10 +385,14 @@ export default function Homepage({
                   <div
                     key={uni.id}
                     onClick={() => onUniversitySelect(uni.id)}
-                    className="flex items-center justify-between p-3 border border-slate-100 hover:border-slate-300 bg-slate-50 hover:bg-white cursor-pointer transition-all duration-150 group"
+                    className="aur-top5-row group"
                   >
-                    <div className="flex items-center space-x-3 truncate">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center border border-slate-900 bg-slate-900 text-white font-mono text-xs font-bold">
+                    <div className="flex items-center space-x-3 truncate min-w-0">
+                      <span
+                        className={`aur-rank-badge shrink-0 ${
+                          idx < 3 ? "aur-rank-badge--elite" : ""
+                        }`}
+                      >
                         {idx + 1}
                       </span>
                       <div className="truncate">

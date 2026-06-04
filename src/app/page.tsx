@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import AppContent from "./AppContent";
 import { SidebarProvider } from "./components/navigation/SidebarContext";
+import { ToastProvider } from "./components/feedback/ToastContext";
 
 export default function Home() {
   return (
@@ -10,7 +11,9 @@ export default function Home() {
       </div>
     }>
       <SidebarProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </SidebarProvider>
     </Suspense>
   );

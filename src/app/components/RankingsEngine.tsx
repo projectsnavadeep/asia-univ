@@ -26,7 +26,8 @@ import {
   DollarSign,
   Globe,
   Award,
-  X
+  X,
+  FilterX,
 } from "lucide-react";
 import { MOCK_UNIVERSITIES, University } from "../data";
 import { useSidebar } from "./navigation/SidebarContext";
@@ -289,7 +290,11 @@ export default function RankingsEngine({
         header: "Rank",
         accessorKey: "calculatedRank",
         cell: ({ row }) => (
-          <span className="flex h-6 w-6 items-center justify-center border border-slate-900 bg-slate-900 text-white font-mono text-xs font-bold">
+          <span
+            className={`aur-rank-badge aur-tabular ${
+              row.original.calculatedRank <= 3 ? "aur-rank-badge--elite" : ""
+            }`}
+          >
             {row.original.calculatedRank}
           </span>
         ),
@@ -313,26 +318,34 @@ export default function RankingsEngine({
         header: "Score",
         accessorKey: "calculatedScore",
         cell: ({ getValue }) => (
-          <span className="font-mono font-bold text-slate-900">{(getValue() as number).toFixed(1)}</span>
+          <span className="aur-score-pill aur-tabular text-slate-900 dark:text-slate-100">
+            {(getValue() as number).toFixed(1)}
+          </span>
         ),
       },
       {
         id: "citations",
         header: "Citations",
         accessorKey: "citations",
-        cell: ({ getValue }) => <span className="font-mono text-slate-600">{(getValue() as number).toFixed(0)}</span>,
+        cell: ({ getValue }) => (
+          <span className="font-mono text-slate-600 aur-tabular">{(getValue() as number).toFixed(0)}</span>
+        ),
       },
       {
         id: "research",
         header: "Research",
         accessorKey: "research",
-        cell: ({ getValue }) => <span className="font-mono text-slate-600">{(getValue() as number).toFixed(0)}</span>,
+        cell: ({ getValue }) => (
+          <span className="font-mono text-slate-600 aur-tabular">{(getValue() as number).toFixed(0)}</span>
+        ),
       },
       {
         id: "employability",
         header: "Employability",
         accessorKey: "employability",
-        cell: ({ getValue }) => <span className="font-mono text-slate-600">{(getValue() as number).toFixed(0)}</span>,
+        cell: ({ getValue }) => (
+          <span className="font-mono text-slate-600 aur-tabular">{(getValue() as number).toFixed(0)}</span>
+        ),
       },
       {
         id: "tuition",
@@ -351,8 +364,11 @@ export default function RankingsEngine({
           const isSelected = selectedUniIds.includes(row.original.id);
           return (
             <button
+              type="button"
               onClick={() => onToggleCompare(row.original.id)}
-              className="flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider text-slate-900 border border-slate-900 px-2.5 py-1 hover:bg-slate-50 transition-colors"
+              className={`aur-btn-ghost aur-focus-ring ${focusRing} ${
+                isSelected ? "aur-btn-ghost--active" : ""
+              }`}
             >
               {isSelected ? (
                 <>
@@ -396,20 +412,22 @@ export default function RankingsEngine({
     <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8 py-8 font-sans flex-grow">
       
       {/* Editorial Title */}
-      <div className="mb-8 border-b border-slate-900 dark:border-cyber-border pb-4 flex flex-col md:flex-row md:items-end md:justify-between">
+      <div className="mb-8 aur-hero-accent flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-amber-700 dark:text-cyber-yellow">
-            Engine & Analytics Database
-          </span>
-          <h2 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 dark:text-white leading-tight mt-1">
+          <span className="aur-caption">Engine & Analytics Database</span>
+          <h2 className="aur-section-title text-3xl md:text-4xl leading-tight mt-2">
             Asia Institutional Ranking Table
           </h2>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-3 tracking-wide">
+            Index refreshed · Jun 2026 · {filteredData.length} institutions indexed
+          </p>
         </div>
         
         {/* Recalculator Drawer Trigger button */}
         <button
+          type="button"
           onClick={() => setIsWeightsDrawerOpen(true)}
-          className="mt-4 md:mt-0 inline-flex items-center justify-center border border-amber-700 bg-amber-50 dark:bg-cyber-gray dark:text-cyber-yellow dark:border-cyber-yellow/40 hover:bg-amber-100 dark:hover:bg-cyber-yellow dark:hover:text-cyber-black text-amber-900 px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors"
+          className={`mt-2 md:mt-0 inline-flex items-center justify-center border border-amber-600/30 bg-gradient-to-b from-amber-50 to-white dark:from-cyber-gray dark:to-cyber-dark dark:text-cyber-yellow dark:border-cyber-yellow/30 hover:border-amber-700 hover:shadow-md text-amber-900 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all aur-focus-ring ${focusRing}`}
         >
           <SlidersHorizontal className="h-4 w-4 mr-2 text-amber-700" />
           Weights Recalculator
@@ -417,11 +435,14 @@ export default function RankingsEngine({
       </div>
 
       {/* 9. Elite Filtering Bar Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-slate-50 dark:bg-cyber-gray border border-slate-200 dark:border-slate-800 p-4">
+      <div className="aur-filter-deck grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+        <p className="md:col-span-4 aur-caption text-slate-400 dark:text-slate-500 -mb-2">
+          Refine index
+        </p>
         
         {/* Search Field */}
         <div className="relative">
-          <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">
+          <label className="aur-caption block text-slate-400 dark:text-slate-500 mb-2">
             Search
           </label>
           <div className="relative">
@@ -430,7 +451,7 @@ export default function RankingsEngine({
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+              className="aur-input pl-9"
             />
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
           </div>
@@ -438,7 +459,7 @@ export default function RankingsEngine({
 
         {/* Location Dropdown */}
         <div>
-          <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">
+          <label className="aur-caption block text-slate-400 dark:text-slate-500 mb-2">
             Location
           </label>
           <div className="relative">
@@ -447,7 +468,7 @@ export default function RankingsEngine({
                 if (e.target.value) handleLocationToggle(e.target.value);
                 e.target.value = "";
               }}
-              className="w-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900"
+              className="aur-input"
             >
               <option value="">Filter Location...</option>
               {uniqueLocations.map((loc) => (
@@ -475,7 +496,7 @@ export default function RankingsEngine({
 
         {/* Program / Subject Dropdown */}
         <div>
-          <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">
+          <label className="aur-caption block text-slate-400 dark:text-slate-500 mb-2">
             Subject Focus
           </label>
           <div className="relative">
@@ -484,7 +505,7 @@ export default function RankingsEngine({
                 if (e.target.value) handleSubjectToggle(e.target.value);
                 e.target.value = "";
               }}
-              className="w-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900"
+              className="aur-input"
             >
               <option value="">Filter Subject...</option>
               {uniqueSubjects.map((sub) => (
@@ -512,7 +533,7 @@ export default function RankingsEngine({
 
         {/* Medium of Instruction */}
         <div>
-          <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">
+          <label className="aur-caption block text-slate-400 dark:text-slate-500 mb-2">
             Language
           </label>
           <div className="relative">
@@ -521,7 +542,7 @@ export default function RankingsEngine({
                 if (e.target.value) handleLanguageToggle(e.target.value);
                 e.target.value = "";
               }}
-              className="w-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900"
+              className="aur-input"
             >
               <option value="">Filter Language...</option>
               {uniqueLanguages.map((lang) => (
@@ -562,9 +583,9 @@ export default function RankingsEngine({
       </div>
 
       {/* 10. Table System Container with Sticky Header & Pinned Column rules */}
-      <div className="relative border border-slate-200 dark:border-cyber-border overflow-x-auto select-none bg-white dark:bg-cyber-dark">
-        <table className="w-full table-fixed border-collapse text-xs">
-          <thead className="sticky top-0 z-10 bg-slate-900 dark:bg-cyber-gray text-white dark:text-cyber-yellow font-sans uppercase tracking-wider font-semibold">
+      <div className="aur-table-wrap relative overflow-x-auto select-none rounded-sm">
+        <table className="aur-table table-fixed w-full">
+          <thead className="sticky top-0 z-10 aur-thead-shadow">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-slate-200 dark:border-slate-800">
                 {headerGroup.headers.map((header, idx) => {
@@ -596,8 +617,8 @@ export default function RankingsEngine({
                       className={`px-4 py-3 text-left font-bold select-none ${
                         isPinnedCol
                           ? idx === 0
-                            ? `sticky left-0 bg-slate-900 dark:bg-cyber-gray z-20 border-r border-slate-800 dark:border-slate-700 ${widthClass}`
-                            : `sticky left-[56px] bg-slate-900 dark:bg-cyber-gray z-20 border-r border-slate-800 dark:border-slate-700 ${widthClass}`
+                            ? `sticky left-0 bg-[#1e293b] dark:bg-[#18181f] z-20 border-r border-white/10 ${widthClass}`
+                            : `sticky left-[56px] bg-[#1e293b] dark:bg-[#18181f] z-20 border-r border-white/10 ${widthClass}`
                           : ""
                       } ${widthClass} ${alignClass} ${
                         isMobileHiddenCol ? "hidden sm:table-cell" : ""
@@ -624,12 +645,9 @@ export default function RankingsEngine({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-250 dark:divide-slate-850 font-sans text-slate-700 dark:text-slate-300">
+          <tbody className="font-sans text-slate-700 dark:text-slate-300">
             {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="hover:bg-slate-50 dark:hover:bg-cyber-gray/25 transition-colors"
-              >
+              <tr key={row.id} className="group">
                 {row.getVisibleCells().map((cell, idx) => {
                   const isPinnedCol = idx < 2;
                   const columnId = cell.column.id;
@@ -659,8 +677,8 @@ export default function RankingsEngine({
                       className={`px-4 py-3 align-middle ${
                         isPinnedCol
                           ? idx === 0
-                            ? `sticky left-0 bg-white dark:bg-cyber-black hover:bg-slate-50 dark:hover:bg-cyber-gray/30 z-10 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white ${widthClass}`
-                            : `sticky left-[56px] bg-white dark:bg-cyber-black hover:bg-slate-50 dark:hover:bg-cyber-gray/30 z-10 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white ${widthClass}`
+                            ? `sticky-pin sticky left-0 z-10 border-r border-slate-200/80 dark:border-cyber-border/40 font-bold text-slate-900 dark:text-white ${widthClass}`
+                            : `sticky-pin sticky left-[56px] z-10 border-r border-slate-200/80 dark:border-cyber-border/40 font-bold text-slate-900 dark:text-white ${widthClass}`
                           : ""
                       } ${widthClass} ${alignClass} ${isMobileHiddenCol ? "hidden sm:table-cell" : ""}`}
                     >
@@ -672,8 +690,26 @@ export default function RankingsEngine({
             ))}
             {filteredData.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="text-center py-12 text-slate-400 italic">
-                  No universities match the current search filters.
+                <td colSpan={columns.length} className="py-16 px-6">
+                  <div className="flex flex-col items-center text-center max-w-md mx-auto">
+                    <div className="flex h-12 w-12 items-center justify-center border border-slate-200 dark:border-cyber-border bg-slate-50 dark:bg-cyber-gray mb-4">
+                      <FilterX className="h-5 w-5 text-amber-700 dark:text-cyber-yellow" />
+                    </div>
+                    <p className="aur-caption mb-2">No matches</p>
+                    <h3 className="font-serif text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                      No institutions match your filters
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                      Try widening location, subject, or rank ranges—or reset all filters to browse the full index.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className={`aur-btn-primary px-5 py-2.5 aur-focus-ring ${focusRing}`}
+                    >
+                      Reset all filters
+                    </button>
+                  </div>
                 </td>
               </tr>
             )}
@@ -682,7 +718,7 @@ export default function RankingsEngine({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between border-t border-slate-200 bg-white py-3 mt-4">
+      <div className="aur-panel flex items-center justify-between px-4 py-3 mt-4">
         <div className="flex flex-1 justify-between sm:hidden">
           <button
             onClick={() => table.previousPage()}

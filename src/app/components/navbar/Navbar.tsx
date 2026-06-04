@@ -3,10 +3,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, Bell, Sun, Moon, Menu, X, ChevronDown, User, Shield, LogOut } from "lucide-react";
 import { useSidebar } from "../navigation/SidebarContext";
+import { useToast } from "../feedback/ToastContext";
 import { TOP_NAV_LINKS } from "../navigation/config";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
+  const { showToast } = useToast();
   const focusRing =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-cyber-yellow dark:focus-visible:ring-offset-cyber-black";
   const {
@@ -59,7 +61,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-cyber-border bg-white/80 dark:bg-cyber-dark/85 backdrop-blur-md transition-all duration-300">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-cyber-border bg-white/90 dark:bg-cyber-dark/90 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)] dark:shadow-[0_1px_0_rgba(234,179,8,0.08)] transition-all duration-300">
       <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           
@@ -269,7 +271,7 @@ export default function Navbar() {
 
                     <button
                       onClick={() => {
-                        alert("Logging out...");
+                        showToast("Signing out of your session…", "info");
                         setShowProfileMenu(false);
                       }}
                       className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 flex items-center space-x-2 transition-colors"
