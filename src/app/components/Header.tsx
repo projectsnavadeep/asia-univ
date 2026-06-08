@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Award, Compass, BarChart2, HelpCircle } from "lucide-react";
 
 interface HeaderProps {
@@ -16,19 +17,18 @@ export default function Header({ currentView, onViewChange }: HeaderProps) {
           {/* Logo / Editorial Brand */}
           <div 
             onClick={() => onViewChange("home")}
-            className="flex cursor-pointer items-center space-x-3 text-slate-900"
+            className="flex cursor-pointer items-center shrink-0"
           >
-            <div className="flex h-10 w-10 items-center justify-center border border-slate-900 bg-slate-900 text-white font-serif text-xl font-semibold">
-              A
-            </div>
-            <div>
-              <h1 className="font-serif text-lg font-bold leading-tight tracking-tight">
-                ASIA UNIVERSITY <span className="text-amber-700 font-sans text-sm font-semibold tracking-wider uppercase ml-1">RANKINGS</span>
-              </h1>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">
-                Official Institutional Portal & Analysis
-              </p>
-            </div>
+            <Image
+              src="/aur-logo.jpg"
+              alt="Asia University Rankings"
+              width={220}
+              height={56}
+              className="h-[44px] w-auto object-contain"
+              priority
+              quality={100}
+              unoptimized
+            />
           </div>
 
           {/* Navigation Items */}

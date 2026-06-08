@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Search, Bell, Sun, Moon, Menu, X, ChevronDown, User, Shield, LogOut } from "lucide-react";
 import { useSidebar } from "../navigation/SidebarContext";
 import { TOP_NAV_LINKS } from "../navigation/config";
@@ -59,35 +60,23 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-cyber-border bg-white dark:bg-cyber-dark transition-all duration-300">
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex py-2.5 items-center justify-between gap-4">
 
-          {/* Logo — Editorial Typography Brand (no box) */}
+          {/* Logo / Editorial Brand */}
           <div
             onClick={() => handleViewChange("home")}
-            className="flex cursor-pointer items-center gap-4 shrink-0 group select-none"
+            className="flex cursor-pointer items-center shrink-0 bg-white/90 dark:bg-white/10 backdrop-blur-sm rounded-md px-2 py-1"
           >
-            {/* Primary wordmark */}
-            <div className="leading-none">
-              <div className="font-black text-[17px] tracking-tight text-slate-900 dark:text-white group-hover:opacity-80 transition-opacity">
-                <span className="block leading-none">ASIA</span>
-                <span className="block leading-none text-amber-600 dark:text-cyber-yellow">
-                  UNIVERSITY
-                </span>
-              </div>
-            </div>
-
-            {/* Vertical divider */}
-            <div className="h-8 w-px bg-slate-300 dark:bg-slate-700 shrink-0" />
-
-            {/* Subtitle */}
-            <div className="hidden sm:block leading-none">
-              <span className="block text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
-                The
-              </span>
-              <span className="block font-bold text-[18px] tracking-tight text-slate-700 dark:text-slate-300 leading-none">
-                Rankings
-              </span>
-            </div>
+            <Image
+              src="/aur-logo-cropped.png"
+              alt="Asia University Rankings"
+              width={458}
+              height={135}
+              className="h-[22px] sm:h-[26px] w-auto object-contain mix-blend-multiply dark:mix-blend-normal"
+              priority
+              quality={100}
+              unoptimized
+            />
           </div>
 
           {/* Navigation Links - Desktop */}
