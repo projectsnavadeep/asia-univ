@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Search, Bell, Sun, Moon, Menu, X, ChevronDown, User, Shield, LogOut } from "lucide-react";
+import { Search, Bell, Sun, Moon, Menu, X, ChevronDown, User, Shield, LogOut, Bot } from "lucide-react";
 import { useSidebar } from "../navigation/SidebarContext";
 import { TOP_NAV_LINKS } from "../navigation/config";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,6 +17,8 @@ export default function Navbar() {
     handleViewChange,
     filters,
     setFilters,
+    isChatOpen,
+    setIsChatOpen,
   } = useSidebar();
 
   const [searchVal, setSearchVal] = useState(filters.searchQuery);
@@ -124,6 +126,15 @@ export default function Navbar() {
 
           {/* Right Section Icons */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+
+            {/* Chat Toggle Button */}
+            <button
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className="cursor-pointer p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-cyber-yellow transition-colors hover:bg-slate-100 dark:hover:bg-cyber-gray rounded-full"
+              title="Open AI Assistant"
+            >
+              <Bot className="h-4 w-4" />
+            </button>
 
             {/* Theme Toggle Button */}
             <button

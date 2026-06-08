@@ -49,10 +49,26 @@ function getMockResponse(query: string): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function FloatingChatAssistant() {
-  const { theme } = useSidebar();
+  const { theme, isChatOpen, setIsChatOpen, activeView } = useSidebar();
   const isDark = theme === "dark";
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isIdle, setIsIdle] = useState(true);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      setIsIdle(false);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setIsIdle(true), 1500);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "init",
@@ -135,16 +151,16 @@ export default function FloatingChatAssistant() {
   // ─── Side Effects ─────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (isOpen) {
+    if (isChatOpen) {
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       setTimeout(() => inputRef.current?.focus(), 140);
     }
-  }, [isOpen, messages]);
+  }, [isChatOpen, messages]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const handleClose = () => {
-    setIsOpen(false);
+    setIsChatOpen(false);
     // Animate back to origin after exit completes
     setTimeout(() => {
       x.set(0);
@@ -192,7 +208,7 @@ export default function FloatingChatAssistant() {
     <>
       {/* ── Physics Chat Panel ──────────────────────────────────────────── */}
       <AnimatePresence>
-        {isOpen && (
+        {isChatOpen && (
           <motion.div
             key="chat-panel"
 
@@ -386,23 +402,50 @@ export default function FloatingChatAssistant() {
 
       {/* ── Floating Trigger Button ─────────────────────────────────────── */}
       <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            key="chat-trigger"
-            onClick={() => setIsOpen(true)}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 22 }}
-            whileHover={{ scale: 1.12 }}
-            whileTap={{ scale: 0.92 }}
-            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-amber-600 dark:bg-cyber-yellow text-white dark:text-cyber-black shadow-lg shadow-amber-600/30 dark:shadow-cyber-yellow/25 flex items-center justify-center"
-            title="Open AI Rankings Assistant"
+        {!isChatOpen && activeView === "home" && isIdle && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
+            className="fixed bottom-6 right-6 z-50 flex items-end gap-4 pointer-events-none"
           >
-            <Bot className="h-6 w-6" />
-            {/* Pulsing attention ring */}
-            <span className="absolute inset-0 rounded-full animate-ping bg-amber-500/30 dark:bg-cyber-yellow/20 pointer-events-none" />
-          </motion.button>
+            {/* The "Come talk to me" tooltip */}
+            <motion.div
+              initial={{ opacity: 0, x: 20, rotate: -5 }}
+              animate={{ opacity: 1, x: 0, rotate: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
+              className={[
+                "relative mb-2 px-3.5 py-2.5 rounded-2xl text-[11px] font-bold shadow-xl cursor-pointer pointer-events-auto transition-transform hover:scale-105",
+                isDark 
+                  ? "bg-cyber-gray border border-cyber-yellow/30 text-cyber-yellow" 
+                  : "bg-white border border-slate-200 text-amber-700 shadow-slate-900/10"
+              ].join(" ")}
+              onClick={() => setIsChatOpen(true)}
+            >
+              👋 Come talk to me!
+              {/* Tooltip triangle pointing right/down */}
+              <div 
+                className={[
+                  "absolute -right-1.5 bottom-3.5 w-3.5 h-3.5 rotate-45 border-r border-b",
+                  isDark ? "bg-cyber-gray border-cyber-yellow/30" : "bg-white border-slate-200"
+                ].join(" ")} 
+              />
+            </motion.div>
+
+            {/* The FAB */}
+            <motion.button
+              key="chat-trigger"
+              onClick={() => setIsChatOpen(true)}
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.92 }}
+              className="pointer-events-auto shrink-0 h-14 w-14 rounded-full bg-amber-600 dark:bg-cyber-yellow text-white dark:text-cyber-black shadow-lg shadow-amber-600/30 dark:shadow-cyber-yellow/25 flex items-center justify-center relative"
+              title="Open AI Rankings Assistant"
+            >
+              <Bot className="h-6 w-6" />
+              {/* Pulsing attention ring */}
+              <span className="absolute inset-0 rounded-full animate-ping bg-amber-500/30 dark:bg-cyber-yellow/20 pointer-events-none" />
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

@@ -37,6 +37,8 @@ interface SidebarContextType {
   handleViewChange: (view: string) => void;
   selectedUniId: string | null;
   setSelectedUniId: (id: string | null) => void;
+  isChatOpen: boolean;
+  setIsChatOpen: (val: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -54,6 +56,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("light"); // Default to clean light theme
   const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Read localStorage for isCollapsed and theme (safe for SSR)
   useEffect(() => {
@@ -158,6 +161,8 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
         handleViewChange,
         selectedUniId,
         setSelectedUniId,
+        isChatOpen,
+        setIsChatOpen,
       }}
     >
       {children}
