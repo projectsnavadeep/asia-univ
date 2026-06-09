@@ -257,6 +257,112 @@ html.dark .aur-top5-row:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
+/* Homepage premium */
+.aur-home-hero {
+  position: relative;
+  border: 1px solid var(--aur-border);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 251, 235, 0.35) 50%, rgba(248, 250, 252, 0.95) 100%);
+  box-shadow: var(--aur-shadow);
+  padding: 2rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .aur-home-hero {
+    padding: 2.5rem 2rem;
+  }
+}
+html.dark .aur-home-hero {
+  background: linear-gradient(135deg, rgba(13, 13, 17, 0.95) 0%, rgba(24, 24, 31, 0.9) 50%, rgba(13, 13, 17, 0.98) 100%);
+}
+
+.aur-home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 15%, rgba(180, 83, 9, 0.08), transparent 45%);
+  pointer-events: none;
+}
+html.dark .aur-home-hero::before {
+  background: radial-gradient(circle at 85% 15%, rgba(234, 179, 8, 0.1), transparent 45%);
+}
+
+.aur-home-stat {
+  border: 1px solid var(--aur-border);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+html.dark .aur-home-stat {
+  background: rgba(24, 24, 31, 0.6);
+}
+
+.aur-home-search {
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+html.dark .aur-home-search {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
+.aur-score-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  margin-top: 0.375rem;
+  width: 4.5rem;
+}
+.aur-score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #b45309, #d97706);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+html.dark .aur-score-bar-fill {
+  background: linear-gradient(90deg, #ca8a04, #eab308);
+}
+
+.aur-editorial-card {
+  transition: background-color 0.2s ease;
+}
+.aur-editorial-card:hover {
+  background: rgba(255, 251, 235, 0.35);
+}
+html.dark .aur-editorial-card:hover {
+  background: rgba(234, 179, 8, 0.04);
+}
+
+.aur-editorial-img-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.aur-editorial-img-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(15, 23, 42, 0.15) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.aur-editorial-card:hover .aur-editorial-img-wrap::after {
+  opacity: 1;
+}
+
+.aur-chat-fab {
+  position: fixed;
+  z-index: 55;
+  width: 4rem;
+  height: 4rem;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.aur-chat-fab:active {
+  cursor: grabbing;
+}
+
 /* Rankings table */
 .aur-table-wrap {
   border: 1px solid var(--aur-border);

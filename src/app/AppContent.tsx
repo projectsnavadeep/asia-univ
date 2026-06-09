@@ -11,6 +11,7 @@ import Homepage from "./components/Homepage";
 import RankingsEngine from "./components/RankingsEngine";
 import ComparisonDock from "./components/ComparisonDock";
 import UniversityProfile from "./components/UniversityProfile";
+import Chatbot from "./components/feedback/Chatbot";
 import { useSidebar } from "./components/navigation/SidebarContext";
 import { Article, MOCK_UNIVERSITIES } from "./data";
 import { BarChart3, Bookmark, Settings, Award, GraduationCap, CheckCircle, ShieldAlert } from "lucide-react";
@@ -80,8 +81,8 @@ export default function AppContent() {
   const savedUniversities = MOCK_UNIVERSITIES.filter((u) => selectedUniIds.includes(u.id));
 
   return (
-    <div className={`aur-page flex min-h-screen flex-col transition-colors duration-300 ${
-      theme === "dark" ? "text-slate-100 dark" : "text-slate-900"
+    <div className={`${view === "home" ? "bg-gradient-to-b from-amber-50/50 via-white to-blue-50" : "aur-page"} flex min-h-screen flex-col transition-colors duration-300 ${
+      theme === "dark" && view !== "home" ? "text-slate-100 dark" : "text-slate-900"
     }`}>
       {/* Top Navigation Bar */}
       <Navbar />
@@ -93,7 +94,7 @@ export default function AppContent() {
         <Sidebar />
 
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col min-w-0 p-4 pb-20 md:pb-6 max-w-[1600px] w-full mx-auto">
+        <main className={`flex-1 flex flex-col min-w-0 pb-20 md:pb-6 w-full mx-auto ${view === "home" ? "p-0 max-w-none" : "p-4 max-w-[1600px]"}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={viewKey}
@@ -361,6 +362,8 @@ export default function AppContent() {
         onClearAll={handleClearCompare}
         onUniversitySelect={handleUniversitySelect}
       />
+
+      <Chatbot />
 
       <footer className="border-t border-slate-200 dark:border-cyber-border bg-slate-50 dark:bg-cyber-dark/80 py-8 transition-colors duration-200">
         <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8 text-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500">
