@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, BookOpen, GraduationCap, ChevronRight, MapPin, Star } from "lucide-react";
-import { MOCK_UNIVERSITIES, FEATURED_ARTICLES, University, Article } from "../data";
+import Link from "next/link";
+import { MOCK_UNIVERSITIES, University, Article } from "../data";
 
 interface HomepageProps {
   onSearchSubmit: (query: string) => void;
@@ -19,6 +20,8 @@ export default function Homepage({
   onViewChange,
 }: HomepageProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(true);
   const [suggestions, setSuggestions] = useState<{
     universities: University[];
     articles: Article[];
@@ -27,6 +30,24 @@ export default function Homepage({
   const [activeTab, setActiveTab] = useState<"overall" | "research" | "employability">("overall");
   
   const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Fetch articles on mount
+  useEffect(() => {
+    async function fetchArticles() {
+      try {
+        const res = await fetch("/api/blogs");
+        if (res.ok) {
+          const data = await res.json();
+          setArticles(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch articles:", err);
+      } finally {
+        setLoadingArticles(false);
+      }
+    }
+    fetchArticles();
+  }, []);
 
   // Debounced search auto-suggestions
   useEffect(() => {
@@ -42,7 +63,7 @@ export default function Homepage({
         uni.subjects.some((sub) => sub.toLowerCase().includes(searchQuery.toLowerCase()))
     ).slice(0, 5);
 
-    const filteredArticles = FEATURED_ARTICLES.filter(
+    const filteredArticles = articles.filter(
       (art) =>
         art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         art.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,7 +71,7 @@ export default function Homepage({
     ).slice(0, 3);
 
     setSuggestions({ universities: filteredUnis, articles: filteredArticles });
-  }, [searchQuery]);
+  }, [searchQuery, articles]);
 
   // Click outside listener to close suggestions
   useEffect(() => {
@@ -348,70 +369,102 @@ export default function Homepage({
       </div>
 
       {/* Editorial Content Grid Header */}
-      <div className="mb-8 border-b border-slate-900 pb-2 flex justify-between items-baseline">
-        <h3 className="font-serif text-2xl font-semibold tracking-tight text-slate-900">
-          Editorial Focus & Regional Briefings
-        </h3>
-        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">
-          Featured Articles
-        </span>
+      <div className="mb-8 border-b border-slate-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-baseline gap-4">
+        <div>
+          <h3 className="font-serif text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            Editorial Focus & Regional Briefings
+          </h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            Featured academic insights and medical career roadmaps across Asian universities.
+          </p>
+        </div>
+        <div className="flex items-center space-x-4 self-end sm:self-auto">
+          <Link
+            href="/blogs/create"
+            className="inline-flex items-center justify-center border-2 border-slate-900 bg-slate-900 dark:border-cyber-yellow dark:bg-transparent dark:text-cyber-yellow dark:shadow-[0_0_8px_rgba(234,179,8,0.1)] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white hover:bg-slate-800 dark:hover:bg-cyber-yellow dark:hover:text-cyber-black transition-all duration-200"
+          >
+            Create Blog
+          </Link>
+          <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">
+            Featured Articles
+          </span>
+        </div>
       </div>
 
-      {/* 3-Column Editorial Grid Modules */}
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-200 border-y border-slate-200">
-        {FEATURED_ARTICLES.map((article, idx) => (
-          <motion.div
-            key={article.id}
-            onClick={() => onArticleSelect(article)}
-            whileHover={{ y: -6 }}
-            whileTap={{ scale: 0.99 }}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut", delay: idx * 0.05 }}
-            className={`py-8 cursor-pointer group flex flex-col justify-between h-full ${
-              idx === 0 ? "md:pr-8" : idx === 1 ? "md:px-8" : "md:pl-8"
-            }`}
-          >
-            <div>
-              {/* Image Frame with Strict Aspect Ratio */}
-              <div className="relative aspect-video w-full mb-6 border border-slate-200 overflow-hidden bg-slate-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <motion.img
-                  src={article.image}
-                  alt={article.title}
-                  whileHover={{ scale: 1.06 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="h-full w-full object-cover object-center transition-transform"
-                />
+      {/* Multi-Column Editorial Grid Modules */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-8 border-y border-slate-200">
+        {loadingArticles ? (
+          Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="pb-4 flex flex-col justify-between h-full animate-pulse">
+              <div>
+                <div className="aspect-video w-full mb-6 bg-slate-100 dark:bg-cyber-gray border border-slate-200 rounded-sm" />
+                <div className="h-3 w-1/3 bg-slate-200 dark:bg-cyber-gray mb-3 rounded" />
+                <div className="h-5 w-3/4 bg-slate-200 dark:bg-cyber-gray mb-2 rounded" />
+                <div className="h-4 w-1/2 bg-slate-200 dark:bg-cyber-gray mb-4 rounded" />
+                <div className="space-y-2">
+                  <div className="h-3 w-full bg-slate-200 dark:bg-cyber-gray rounded" />
+                  <div className="h-3 w-full bg-slate-200 dark:bg-cyber-gray rounded" />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : articles.length === 0 ? (
+          <div className="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 font-medium">
+            No articles published yet. Be the first to create one!
+          </div>
+        ) : (
+          articles.map((article, idx) => (
+            <motion.div
+              key={article.id}
+              onClick={() => onArticleSelect(article)}
+              whileHover={{ y: -6 }}
+              whileTap={{ scale: 0.99 }}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut", delay: idx * 0.05 }}
+              className="pb-4 cursor-pointer group flex flex-col justify-between h-full"
+            >
+              <div>
+                {/* Image Frame with Strict Aspect Ratio */}
+                <div className="relative aspect-video w-full mb-6 border border-slate-200 overflow-hidden bg-slate-100 dark:bg-cyber-gray">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <motion.img
+                    src={article.image}
+                    alt={article.title}
+                    whileHover={{ scale: 1.06 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="h-full w-full object-cover object-center transition-transform"
+                  />
+                </div>
+
+                {/* Metadata */}
+                <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-3">
+                  <span>{article.source}</span>
+                  <span>•</span>
+                  <span>{article.date}</span>
+                </div>
+
+                {/* Headings in Lora */}
+                <h4 className="font-serif text-lg font-bold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-cyber-yellow transition-colors leading-snug mb-2">
+                  {article.title}
+                </h4>
+                <p className="font-serif text-xs italic text-slate-500 mb-4 leading-normal">
+                  {article.subtitle}
+                </p>
+
+                {/* Body Summary */}
+                <p className="text-slate-600 text-xs leading-relaxed line-clamp-3 mb-6">
+                  {article.contentSummary}
+                </p>
               </div>
 
-              {/* Metadata */}
-              <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-3">
-                <span>{article.source}</span>
-                <span>•</span>
-                <span>{article.date}</span>
+              <div className="flex items-center text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-cyber-yellow transition-colors">
+                <span>Read Full Report</span>
+                <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
               </div>
-
-              {/* Headings in Lora */}
-              <h4 className="font-serif text-lg font-bold text-slate-900 group-hover:text-amber-700 transition-colors leading-snug mb-2">
-                {article.title}
-              </h4>
-              <p className="font-serif text-xs italic text-slate-500 mb-4 leading-normal">
-                {article.subtitle}
-              </p>
-
-              {/* Body Summary */}
-              <p className="text-slate-600 text-xs leading-relaxed line-clamp-3 mb-6">
-                {article.contentSummary}
-              </p>
-            </div>
-
-            <div className="flex items-center text-xs font-bold uppercase tracking-wider text-slate-900 group-hover:text-amber-700 transition-colors">
-              <span>Read Full Report</span>
-              <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );

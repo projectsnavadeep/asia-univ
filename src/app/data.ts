@@ -980,6 +980,9 @@ export interface Article {
   readTime: string;
   contentSummary: string;
   image: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
 }
 
 export const FEATURED_ARTICLES: Article[] = [
