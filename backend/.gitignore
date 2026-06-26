@@ -1,9 +1,15 @@
+# Environment variables
+.env
+
 # Python virtual environment
 venv/
 
-# Python cache
+# Cache files
 __pycache__/
 *.pyc
+<<<<<<< HEAD
+.pytest_cache/
+=======
 .pytest_cache/
 
 # VS Code settings
@@ -14,3 +20,4 @@ __pycache__/
 
 # env files
 .env
+>>>>>>> main

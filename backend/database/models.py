@@ -103,7 +103,7 @@ class University(Base):
     ranking_scores = relationship("RankingScore", back_populates="university", cascade="all, delete-orphan", 
                                   lazy="selectin")
     
-    metrics = relationship("UniversityMetrics", back_populates="university", uselist=False, 
+    metrics = relationship("UniversityMetric", back_populates="university", uselist=False, 
                            cascade="all, delete-orphan", lazy="selectin")
     
     courses = relationship("Course", back_populates="university", cascade="all, delete-orphan",
@@ -208,7 +208,7 @@ class UniversityMetric(Base):
     university = relationship("University", back_populates="metrics")
 
     def __repr__(self) -> str:
-        return f"<UniversityMetrics university_id={self.university_id}>"
+        return f"<UniversityMetric university_id={self.university_id}>"
     
 
 class Course(Base):
