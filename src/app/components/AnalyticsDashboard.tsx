@@ -1,25 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Cell,
-  AreaChart,
-  Area,
-} from "recharts";
 import { MOCK_UNIVERSITIES } from "../data";
-import { useSidebar } from "./navigation/SidebarContext";
 import {
   GraduationCap,
   BarChart3,
@@ -96,33 +78,14 @@ function useAnalytics() {
       { metric: "Int'l Students", value: +(unis.reduce((s, u) => s + u.intlStudents, 0) / count).toFixed(1) },
     ];
 
-    const trendData = [
-      { year: "2021", score: avgOverall - 8, research: avgOverall - 12 },
-      { year: "2022", score: avgOverall - 5, research: avgOverall - 7 },
-      { year: "2023", score: avgOverall - 3, research: avgOverall - 4 },
-      { year: "2024", score: avgOverall - 1, research: avgOverall - 1 },
-      { year: "2025", score: avgOverall,     research: avgOverall + 2 },
-      { year: "2026", score: avgOverall + 2, research: avgOverall + 5 },
-    ];
+    const sortedCountries = [...countryData].sort((a, b) => b.avgScore - a.avgScore);
+    const topCountry = sortedCountries[0]?.country || "Asia";
+    const researchLeader = [...countryData].sort((a, b) => b.avgResearch - a.avgResearch)[0]?.country || "Asia";
+    const topInstitutions = [...countryData].sort((a, b) => b.institutions - a.institutions)[0]?.country || "Asia";
 
-    return { count, avgOverall, avgCitations, avgEmployability, medCount, medPct, countryData, radarData, trendData };
+    return { count, avgOverall, avgCitations, avgEmployability, medCount, medPct, countryData, radarData, topCountry, researchLeader, topInstitutions };
   }, []);
 }
-
-// ── Custom tooltip ──
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload) return null;
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg">
-      <p className="text-[10px] font-bold text-slate-800 mb-1">{label}</p>
-      {payload.map((p: any, i: number) => (
-        <p key={i} className="text-[10px]" style={{ color: p.color || p.fill }}>
-          {p.name}: <span className="font-bold">{p.value}%</span>
-        </p>
-      ))}
-    </div>
-  );
-};
 
 export default function AnalyticsDashboard() {
   const a = useAnalytics();
@@ -136,8 +99,10 @@ export default function AnalyticsDashboard() {
     <div className="w-full space-y-6">
 
       {/* ── Header ── */}
-      <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+      <div className="relative overflow-hidden p-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-amber-50/40 to-white shadow-sm">
+        <div className="pointer-events-none absolute -top-8 -right-8 h-32 w-32 rounded-full bg-amber-100/60 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-sky-100/50 blur-3xl" />
+        <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 shadow-sm">
           Academic Intelligence
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3">
@@ -192,7 +157,7 @@ export default function AnalyticsDashboard() {
         ].map((stat) => (
           <div
             key={stat.title}
-            className="p-4 rounded-2xl border bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="p-4 rounded-2xl border bg-gradient-to-br from-white via-slate-50 to-white shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl motion-safe:transform-gpu"
             style={{ borderColor: stat.border, backgroundColor: stat.bg }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -205,134 +170,143 @@ export default function AnalyticsDashboard() {
         ))}
       </div>
 
-      {/* ── Row: Country Comparison + Radar ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
-        {/* Country Bar Chart */}
-        <div className="lg:col-span-3 p-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                Country Performance
-              </span>
-              <span className="text-xs text-slate-500">Average scores by country</span>
-            </div>
-            <div className="flex gap-3">
-              <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                <span className="w-2 h-2 rounded-full bg-slate-400" /> Score
-              </span>
-              <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-blue-400">
-                <span className="w-2 h-2 rounded-full bg-blue-400" /> Research
-              </span>
-            </div>
+      {/* ── Country Performance ── */}
+      <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-2">
+              Country Performance
+            </span>
+            <p className="text-sm text-slate-500 max-w-xl">
+              A horizontal overview of top regional performance and average scores in audited markets.
+            </p>
           </div>
-          <div className="h-[260px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={a.countryData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }} barCategoryGap="25%">
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis dataKey="country" tick={{ fontSize: 11, fill: textColor, fontWeight: 600 }} axisLine={{ stroke: axisColor }} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: textColor }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="avgScore" name="Score" radius={[6, 6, 0, 0]}>
-                  {a.countryData.map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                </Bar>
-                <Bar dataKey="avgResearch" name="Research" radius={[6, 6, 0, 0]} opacity={0.35}>
-                  {a.countryData.map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            Live market pulse
           </div>
         </div>
 
-        {/* Radar Chart */}
-        <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
-            Average Metric Profile
-          </span>
-          <span className="text-xs text-slate-500 block mb-4">Five-axis institutional quality index</span>
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={a.radarData} cx="50%" cy="50%" outerRadius="72%">
-                <PolarGrid stroke={gridColor} />
-                <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: textColor }} />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar
-                  name="Average"
-                  dataKey="value"
-                  stroke={COLORS.blue}
-                  fill={COLORS.blue}
-                  fillOpacity={0.15}
-                  strokeWidth={2.5}
-                  dot={{ r: 4, fill: COLORS.blue }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-              </RadarChart>
-            </ResponsiveContainer>
+        <div className="mt-4 overflow-x-auto">
+          <div className="flex min-w-full gap-3 py-2">
+            {a.countryData.map((entry) => (
+              <div key={entry.country} className="min-w-[220px] rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50 to-slate-100 p-4 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lg motion-safe:transform-gpu">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-3 w-3 items-center justify-center rounded-full border border-slate-200" style={{ backgroundColor: entry.fill }} />
+                    <span className="font-semibold text-slate-900">{entry.country}</span>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">{entry.institutions} unis</span>
+                </div>
+                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  <div className="rounded-2xl bg-white/90 p-3 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 font-semibold text-slate-900">
+                      <span>Avg score</span>
+                      <span>{entry.avgScore}%</span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/90 p-3 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 font-semibold text-slate-900">
+                      <span>Avg research</span>
+                      <span>{entry.avgResearch}%</span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/90 p-3 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 font-semibold text-slate-900">
+                      <span>Avg citations</span>
+                      <span>{entry.avgCitations}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── Performance Trend ── */}
-      <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-              Performance Trend
-            </span>
-            <span className="text-xs text-slate-500">Year-over-year institutional quality index</span>
-          </div>
-          <div className="flex gap-4">
-            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.green }} /> Overall Score
-            </span>
-            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.blue }} /> Research Output
-            </span>
+      {/* ── Intelligence Highlights ── */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 p-6 rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 shadow-sm">
+          <span className="text-[10px] uppercase tracking-[0.22em] font-semibold text-slate-500">
+            Intelligence Highlights
+          </span>
+          <h3 className="mt-3 text-2xl font-semibold text-slate-900">
+            Institutional analytics made actionable
+          </h3>
+          <p className="mt-3 text-sm text-slate-600 max-w-2xl leading-6">
+            A concise executive summary crafted to support leadership decisions, without visual clutter. Focused on market strength, research leadership, and program trends.
+          </p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                title: "Top quality market",
+                value: a.topCountry,
+                detail: "Highest average institutional score",
+              },
+              {
+                title: "Research leader",
+                value: a.researchLeader,
+                detail: "Strongest average research impact",
+              },
+              {
+                title: "Largest cluster",
+                value: a.topInstitutions,
+                detail: "Most audited institutions",
+              },
+              {
+                title: "Medicine coverage",
+                value: `${a.medPct}% of institutions`,
+                detail: "Presence of medicine programs in the dataset",
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-sm transition duration-300 ease-out hover:-translate-y-1 hover:shadow-xl motion-safe:transform-gpu">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-semibold text-slate-400">{item.title}</p>
+                  <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">Insight</span>
+                </div>
+                <p className="mt-3 text-xl font-semibold text-slate-900">{item.value}</p>
+                <p className="mt-2 text-sm text-slate-500">{item.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="h-[220px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={a.trendData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-              <defs>
-                <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={COLORS.green} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={COLORS.green} stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={COLORS.blue} stopOpacity={0.2} />
-                  <stop offset="100%" stopColor={COLORS.blue} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-              <XAxis dataKey="year" tick={{ fontSize: 11, fill: textColor, fontWeight: 600 }} axisLine={{ stroke: axisColor }} tickLine={false} />
-              <YAxis domain={[40, 100]} tick={{ fontSize: 10, fill: textColor }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="score"
-                stroke={COLORS.green}
-                fill="url(#greenGrad)"
-                strokeWidth={2.5}
-                name="Score"
-                dot={{ fill: COLORS.green, r: 4, strokeWidth: 2, stroke: "#fff" }}
-                activeDot={{ r: 6 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="research"
-                stroke={COLORS.blue}
-                fill="url(#blueGrad)"
-                strokeWidth={2.5}
-                name="Research"
-                dot={{ fill: COLORS.blue, r: 4, strokeWidth: 2, stroke: "#fff" }}
-                activeDot={{ r: 6 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+
+        <div className="p-6 rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-slate-500">
+                Section pulse
+              </span>
+              <h4 className="mt-2 text-lg font-semibold text-slate-900">Snapshot of the latest analytics</h4>
+            </div>
+            <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-700">
+              Updated daily
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4 text-sm text-slate-600">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lg motion-safe:transform-gpu">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-slate-900">Audited institutions</p>
+                <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-700">Live</span>
+              </div>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{a.count}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lg motion-safe:transform-gpu">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-slate-900">Average employability</p>
+                <span className="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700">Stable</span>
+              </div>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{a.avgEmployability}%</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lg motion-safe:transform-gpu">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-slate-900">Average score</p>
+                <span className="rounded-full bg-sky-100 px-2 py-1 text-[11px] font-semibold text-sky-700">Benchmark</span>
+              </div>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{a.avgOverall}%</p>
+            </div>
+          </div>
         </div>
       </div>
 
